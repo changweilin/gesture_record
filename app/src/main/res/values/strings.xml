@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GestureRecord</string>
+    <string name="accessibility_service_description">This service is used for dispatching recorded touch gestures.</string>
+</resources>

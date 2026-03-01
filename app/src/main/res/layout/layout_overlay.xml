@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="8dp"
+    app:cardBackgroundColor="#CC000000">
+
+    <LinearLayout
+        android:id="@+id/llContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="8dp">
+
+        <LinearLayout
+            android:id="@+id/llDraggableHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingBottom="8dp">
+
+            <TextView
+                android:id="@+id/tvComboName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Gesture Combo"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                android:textSize="14sp" />
+
+            <ImageView
+                android:id="@+id/btnClose"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                app:tint="@android:color/white" />
+        </LinearLayout>
+
+        <!-- Controls -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <Button
+                android:id="@+id/btnSmartRecord"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="智能錄製"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:textColor="@android:color/holo_orange_light" />
+
+            <Button
+                android:id="@+id/btnRecord"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="軌跡錄製"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:textColor="@android:color/holo_red_light" />
+        </LinearLayout>
+        
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <Button
+                android:id="@+id/btnSave"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="儲存"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:textColor="@android:color/holo_blue_light" />
+
+            <Button
+                android:id="@+id/btnPlayTemp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="試播"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:textColor="@android:color/white" />
+                
+            <Button
+                android:id="@+id/btnPlaySelected"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="播選定"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:textColor="@android:color/holo_green_light" />
+        </LinearLayout>
+
+        <!-- Slots Grid -->
+        <GridLayout
+            android:id="@+id/glSlots"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:columnCount="3"
+            android:rowCount="3"
+            android:useDefaultMargins="true"
+            android:alignmentMode="alignBounds"
+            android:layout_gravity="center">
+
+            <!-- 9 Slots will be added dynamically or statically -->
+            <Button android:id="@+id/slot0" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:text="1" android:layout_width="50dp" android:layout_height="50dp" android:insetTop="0dp" android:insetBottom="0dp" android:padding="0dp"/>
+            <Button android:id="@+id/slot1" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:text="2" android:layout_width="50dp" android:layout_height="50dp" android:insetTop="0dp" android:insetBottom="0dp" android:padding="0dp"/>
+            <Button android:id="@+id/slot2" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:text="3" android:layout_width="50dp" android:layout_height="50dp" android:insetTop="0dp" android:insetBottom="0dp" android:padding="0dp"/>
+            
+            <Button android:id="@+id/slot3" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:text="4" android:layout_width="50dp" android:layout_height="50dp" android:insetTop="0dp" android:insetBottom="0dp" android:padding="0dp"/>
+            <Button android:id="@+id/slot4" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:text="5" android:layout_width="50dp" android:layout_height="50dp" android:insetTop="0dp" android:insetBottom="0dp" android:padding="0dp"/>
+            <Button android:id="@+id/slot5" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:text="6" android:layout_width="50dp" android:layout_height="50dp" android:insetTop="0dp" android:insetBottom="0dp" android:padding="0dp"/>
+            
+            <Button android:id="@+id/slot6" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:text="7" android:layout_width="50dp" android:layout_height="50dp" android:insetTop="0dp" android:insetBottom="0dp" android:padding="0dp"/>
+            <Button android:id="@+id/slot7" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:text="8" android:layout_width="50dp" android:layout_height="50dp" android:insetTop="0dp" android:insetBottom="0dp" android:padding="0dp"/>
+            <Button android:id="@+id/slot8" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:text="9" android:layout_width="50dp" android:layout_height="50dp" android:insetTop="0dp" android:insetBottom="0dp" android:padding="0dp"/>
+        </GridLayout>
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>
