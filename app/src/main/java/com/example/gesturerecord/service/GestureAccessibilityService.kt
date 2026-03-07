@@ -62,6 +62,7 @@ class GestureAccessibilityService : AccessibilityService() {
                 Toast.makeText(this@GestureAccessibilityService, "手勢播放被取消", Toast.LENGTH_SHORT).show()
             }
         }, null)
+    }
 
     fun playSmartClick(text: String?, viewId: String?, className: String?) {
         val rootNode = rootInActiveWindow
