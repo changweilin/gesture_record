@@ -1,0 +1,15 @@
+# Gradle
+.gradle/
+build/
+wrapper/
+
+# Android build outputs
+app/build/
+
+# Local configuration
+local.properties
+*.iml
+
+# IDE
+.idea/
+*.DS_Store
