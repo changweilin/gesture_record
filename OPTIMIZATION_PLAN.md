@@ -133,10 +133,10 @@ T2 與 T7 需一起完成（版本號同步）。
 
 ## 完成標準
 
-- [ ] T1：`GestureAccessibilityService.kt` 編譯無誤
-- [ ] T2：`gesture_items` 有 `(combinationId, slotIndex)` 唯一複合索引
-- [ ] T3：`SLOT_COUNT`、`EXTRA_COMBINATION_ID`、`EXTRA_COMBINATION_NAME` 常數定義並全面替換
-- [ ] T4：`slotButtons` 提升為 field，不再重複建立
-- [ ] T5：`onDestroy` 的 catch block 加入 `Log.e`
-- [ ] T6：名稱長度驗證 ≤ 50 字元
-- [ ] T7：`MIGRATION_2_3` 定義，資料庫版本升至 3，移除 destructive migration
+- [x] T1：`GestureAccessibilityService.kt` 編譯無誤
+- [x] T2：`gesture_items` 有 `(combinationId, slotIndex)` 唯一複合索引
+- [x] T3：`SLOT_COUNT`、`EXTRA_COMBINATION_ID`、`EXTRA_COMBINATION_NAME` 常數定義並全面替換
+- [x] T4：`slotButtons` 提升為 field，不再重複建立
+- [x] T5：`onDestroy` 的 catch block 加入 `Log.e`
+- [x] T6：名稱長度驗證 ≤ 50 字元
+- [x] T7：`MIGRATION_2_3` 定義，資料庫版本升至 3，移除 destructive migration
