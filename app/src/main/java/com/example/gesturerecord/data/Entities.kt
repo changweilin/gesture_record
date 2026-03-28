@@ -22,7 +22,7 @@ data class GestureCombination(
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("combinationId")]
+    indices = [Index("combinationId"), Index(value = ["combinationId", "slotIndex"], unique = true)]
 )
 data class GestureItem(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

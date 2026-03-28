@@ -20,6 +20,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.gesturerecord.data.GestureCombination
 import com.example.gesturerecord.service.GestureAccessibilityService
 import com.example.gesturerecord.service.OverlayService
+import com.example.gesturerecord.service.OverlayService.Companion.EXTRA_COMBINATION_ID
+import com.example.gesturerecord.service.OverlayService.Companion.EXTRA_COMBINATION_NAME
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.launch
 
@@ -78,9 +80,12 @@ class MainActivity : AppCompatActivity() {
             .setTitle("新增手勢組合")
             .setView(editText)
             .setPositiveButton("新增") { _, _ ->
-                val name = editText.text.toString()
-                if (name.isNotBlank()) {
-                    viewModel.addCombination(name)
+                val name = editText.text.toString().trim()
+                when {
+                    name.isBlank() -> Unit
+                    name.length > MAX_NAME_LENGTH ->
+                        Toast.makeText(this, "名稱最多 $MAX_NAME_LENGTH 個字元", Toast.LENGTH_SHORT).show()
+                    else -> viewModel.addCombination(name)
                 }
             }
             .setNegativeButton("取消", null)
@@ -103,9 +108,12 @@ class MainActivity : AppCompatActivity() {
                         .setTitle("編輯名稱")
                         .setView(editText)
                         .setPositiveButton("儲存") { _, _ ->
-                            val newName = editText.text.toString()
-                            if (newName.isNotBlank()) {
-                                viewModel.updateCombinationName(combo, newName)
+                            val newName = editText.text.toString().trim()
+                            when {
+                                newName.isBlank() -> Unit
+                                newName.length > MAX_NAME_LENGTH ->
+                                    Toast.makeText(this, "名稱最多 $MAX_NAME_LENGTH 個字元", Toast.LENGTH_SHORT).show()
+                                else -> viewModel.updateCombinationName(combo, newName)
                             }
                         }
                         .setNegativeButton("取消", null)
@@ -143,8 +151,8 @@ class MainActivity : AppCompatActivity() {
 
         // Start overlay service
         val intent = Intent(this, OverlayService::class.java).apply {
-            putExtra("COMBINATION_ID", combo.id)
-            putExtra("COMBINATION_NAME", combo.name)
+            putExtra(EXTRA_COMBINATION_ID, combo.id)
+            putExtra(EXTRA_COMBINATION_NAME, combo.name)
         }
         startForegroundService(intent) // Uses specialUse foreground type
         finish() // Close main app to show overlay on home screen / other apps
@@ -161,5 +169,9 @@ class MainActivity : AppCompatActivity() {
                 .setNegativeButton("取消", null)
                 .show()
         }
+    }
+
+    companion object {
+        private const val MAX_NAME_LENGTH = 50
     }
 }

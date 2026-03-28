@@ -51,10 +51,9 @@ class GestureAccessibilityService : AccessibilityService() {
         val stroke = GestureDescription.StrokeDescription(path, 0, safeDuration)
         val gesture = GestureDescription.Builder().addStroke(stroke).build()
 
-        val success = dispatchGesture(gesture, object : GestureResultCallback() {
+        dispatchGesture(gesture, object : GestureResultCallback() {
             override fun onCompleted(gestureDescription: GestureDescription?) {
                 super.onCompleted(gestureDescription)
-                // Toast might be shown, but could be noisy
             }
 
             override fun onCancelled(gestureDescription: GestureDescription?) {
@@ -62,6 +61,7 @@ class GestureAccessibilityService : AccessibilityService() {
                 Toast.makeText(this@GestureAccessibilityService, "手勢播放被取消", Toast.LENGTH_SHORT).show()
             }
         }, null)
+    }
 
     fun playSmartClick(text: String?, viewId: String?, className: String?) {
         val rootNode = rootInActiveWindow

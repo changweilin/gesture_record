@@ -9,6 +9,7 @@ import android.content.Intent
 import android.graphics.PixelFormat
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -36,6 +37,9 @@ class OverlayService : Service() {
     private lateinit var params: WindowManager.LayoutParams
     private lateinit var captureParams: WindowManager.LayoutParams
 
+    // slot 按鈕列表提升為 field，初始化一次後共用
+    private lateinit var slotButtons: List<Button>
+
     private var combinationId: Long = -1
     private var combinationName: String = ""
 
@@ -43,12 +47,12 @@ class OverlayService : Service() {
     private val scope = CoroutineScope(Dispatchers.Main + serviceJob)
     private lateinit var gestureDao: GestureDao
 
-    private var selectedSlot: Int = -1 // 0 to 8
-    
+    private var selectedSlot: Int = -1 // 0 to SLOT_COUNT-1
+
     // For path recording
     private var tempGesturePoints: List<Pair<Float, Float>>? = null
     private var tempGestureDuration: Long = 0
-    
+
     // For smart click recording
     private var tempActionType: Int = -1 // 0 = Path, 1 = UI Click
     private var tempNodeText: String? = null
@@ -81,7 +85,7 @@ class OverlayService : Service() {
             .setContentText("Overlay is running")
             .setSmallIcon(android.R.drawable.ic_menu_camera)
             .build()
-        
+
         // foregroundServiceType specialUse is required in API 34+ for floating windows
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startForeground(1, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
@@ -92,8 +96,8 @@ class OverlayService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         intent?.let {
-            combinationId = it.getLongExtra("COMBINATION_ID", -1)
-            combinationName = it.getStringExtra("COMBINATION_NAME") ?: "Gesture Combo"
+            combinationId = it.getLongExtra(EXTRA_COMBINATION_ID, -1)
+            combinationName = it.getStringExtra(EXTRA_COMBINATION_NAME) ?: "Gesture Combo"
             overlayView.findViewById<TextView>(R.id.tvComboName).text = combinationName
             loadSlots()
         }
@@ -120,6 +124,11 @@ class OverlayService : Service() {
             gravity = Gravity.TOP or Gravity.START
             x = 0
             y = 100
+        }
+
+        // 初始化 slotButtons（唯一一次）
+        slotButtons = (0 until SLOT_COUNT).map { i ->
+            overlayView.findViewById(resources.getIdentifier("slot$i", "id", packageName))
         }
 
         setupDraggableHeader()
@@ -193,18 +202,6 @@ class OverlayService : Service() {
         val btnPlayTemp = overlayView.findViewById<Button>(R.id.btnPlayTemp)
         val btnPlaySelected = overlayView.findViewById<Button>(R.id.btnPlaySelected)
 
-        val slots = listOf<Button>(
-            overlayView.findViewById(R.id.slot0),
-            overlayView.findViewById(R.id.slot1),
-            overlayView.findViewById(R.id.slot2),
-            overlayView.findViewById(R.id.slot3),
-            overlayView.findViewById(R.id.slot4),
-            overlayView.findViewById(R.id.slot5),
-            overlayView.findViewById(R.id.slot6),
-            overlayView.findViewById(R.id.slot7),
-            overlayView.findViewById(R.id.slot8)
-        )
-
         btnSmartRecord.setOnClickListener {
             val service = GestureAccessibilityService.instance
             if (service == null) {
@@ -222,7 +219,7 @@ class OverlayService : Service() {
                     tempNodeText = nodeInfo.text?.toString()
                     tempNodeViewId = nodeInfo.viewIdResourceName
                     tempNodeClassName = nodeInfo.className?.toString()
-                    
+
                     val desc = tempNodeText ?: tempNodeViewId ?: tempNodeClassName ?: "未知元件"
                     Toast.makeText(this@OverlayService, "已捕捉點擊: $desc", Toast.LENGTH_SHORT).show()
                 }
@@ -235,10 +232,10 @@ class OverlayService : Service() {
             Toast.makeText(this, "請開始在螢幕上滑動", Toast.LENGTH_SHORT).show()
         }
 
-        slots.forEachIndexed { index, button ->
+        slotButtons.forEachIndexed { index, button ->
             button.setOnClickListener {
                 selectedSlot = index
-                slots.forEach { it.setBackgroundColor(android.graphics.Color.TRANSPARENT) }
+                slotButtons.forEach { it.setBackgroundColor(android.graphics.Color.TRANSPARENT) }
                 button.setBackgroundColor(android.graphics.Color.LTGRAY)
             }
         }
@@ -276,10 +273,10 @@ class OverlayService : Service() {
                             durationMs = tempGestureDuration
                         )
                     }
-                    
+
                     gestureDao.insertItem(item)
                     withContext(Dispatchers.Main) {
-                        slots[selectedSlot].text = if (tempActionType == 1) "C" else "S"
+                        slotButtons[selectedSlot].text = if (tempActionType == 1) "C" else "S"
                         Toast.makeText(this@OverlayService, "已儲存至槽位 ${selectedSlot + 1}", Toast.LENGTH_SHORT).show()
                     }
                 } else {
@@ -334,20 +331,9 @@ class OverlayService : Service() {
         scope.launch {
             val items = gestureDao.getItemsForCombination(combinationId)
             withContext(Dispatchers.Main) {
-                val slots = listOf<Button>(
-                    overlayView.findViewById(R.id.slot0),
-                    overlayView.findViewById(R.id.slot1),
-                    overlayView.findViewById(R.id.slot2),
-                    overlayView.findViewById(R.id.slot3),
-                    overlayView.findViewById(R.id.slot4),
-                    overlayView.findViewById(R.id.slot5),
-                    overlayView.findViewById(R.id.slot6),
-                    overlayView.findViewById(R.id.slot7),
-                    overlayView.findViewById(R.id.slot8)
-                )
                 items.forEach { item ->
-                    if (item.slotIndex in 0..8) {
-                        slots[item.slotIndex].text = if (item.actionType == 1) "C" else "S"
+                    if (item.slotIndex in 0 until SLOT_COUNT) {
+                        slotButtons[item.slotIndex].text = if (item.actionType == 1) "C" else "S"
                     }
                 }
             }
@@ -377,13 +363,28 @@ class OverlayService : Service() {
         serviceJob.cancel()
         if (::windowManager.isInitialized) {
             if (::overlayView.isInitialized) {
-                try { windowManager.removeView(overlayView) } catch (e: Exception) {}
+                try {
+                    windowManager.removeView(overlayView)
+                } catch (e: Exception) {
+                    Log.e(TAG, "移除 overlay view 失敗", e)
+                }
             }
             if (::captureView.isInitialized) {
-                try { windowManager.removeView(captureView) } catch (e: Exception) {}
+                try {
+                    windowManager.removeView(captureView)
+                } catch (e: Exception) {
+                    Log.e(TAG, "移除 capture view 失敗", e)
+                }
             }
         }
     }
 
     override fun onBind(intent: Intent): IBinder? = null
+
+    companion object {
+        private const val TAG = "OverlayService"
+        const val SLOT_COUNT = 9
+        const val EXTRA_COMBINATION_ID = "COMBINATION_ID"
+        const val EXTRA_COMBINATION_NAME = "COMBINATION_NAME"
+    }
 }
