@@ -5,7 +5,6 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 
@@ -19,11 +18,15 @@ class TransparentCaptureView(context: Context) : View(context) {
         strokeCap = Paint.Cap.ROUND
     }
     private val path = Path()
-    
+
     // To store gesture raw data for AccessibilityService path building
     val recordedPoints = mutableListOf<Pair<Float, Float>>()
     var startTimeMs: Long = 0
     var durationMs: Long = 0
+
+    // 上一次記錄的座標，用於距離篩選
+    private var lastRecordedX = 0f
+    private var lastRecordedY = 0f
 
     var onGestureComplete: (() -> Unit)? = null
 
@@ -40,21 +43,32 @@ class TransparentCaptureView(context: Context) : View(context) {
                 path.moveTo(x, y)
                 recordedPoints.clear()
                 recordedPoints.add(Pair(x, y))
+                lastRecordedX = x
+                lastRecordedY = y
                 startTimeMs = System.currentTimeMillis()
-                return true
+                invalidate()
             }
             MotionEvent.ACTION_MOVE -> {
-                path.lineTo(x, y)
-                recordedPoints.add(Pair(x, y))
+                // 只有移動距離 >= MIN_POINT_DISTANCE_SQ 才記錄，減少物件分配與重繪次數
+                val dx = x - lastRecordedX
+                val dy = y - lastRecordedY
+                if (dx * dx + dy * dy >= MIN_POINT_DISTANCE_SQ) {
+                    path.lineTo(x, y)
+                    recordedPoints.add(Pair(x, y))
+                    lastRecordedX = x
+                    lastRecordedY = y
+                    // 與 Choreographer Vsync 同步，避免超過螢幕刷新率的無效重繪
+                    postInvalidateOnAnimation()
+                }
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 path.lineTo(x, y)
                 recordedPoints.add(Pair(x, y))
                 durationMs = System.currentTimeMillis() - startTimeMs
+                invalidate()
                 onGestureComplete?.invoke()
             }
         }
-        invalidate()
         return true
     }
 
@@ -62,10 +76,15 @@ class TransparentCaptureView(context: Context) : View(context) {
         super.onDraw(canvas)
         canvas.drawPath(path, paint)
     }
-    
+
     fun reset() {
         path.reset()
         recordedPoints.clear()
         invalidate()
+    }
+
+    companion object {
+        // 5px 距離閾值（平方值避免 sqrt 計算）
+        private const val MIN_POINT_DISTANCE_SQ = 25f
     }
 }

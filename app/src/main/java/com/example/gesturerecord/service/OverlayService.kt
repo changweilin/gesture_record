@@ -49,6 +49,9 @@ class OverlayService : Service() {
 
     private var selectedSlot: Int = -1 // 0 to SLOT_COUNT-1
 
+    // 路徑點位解析快取：key = slotIndex，儲存時清除對應 key，避免重複解析序列化字串
+    private val parsedPointsCache = HashMap<Int, List<Pair<Float, Float>>>()
+
     // For path recording
     private var tempGesturePoints: List<Pair<Float, Float>>? = null
     private var tempGestureDuration: Long = 0
@@ -126,10 +129,18 @@ class OverlayService : Service() {
             y = 100
         }
 
-        // 初始化 slotButtons（唯一一次）
-        slotButtons = (0 until SLOT_COUNT).map { i ->
-            overlayView.findViewById(resources.getIdentifier("slot$i", "id", packageName))
-        }
+        // 初始化 slotButtons（唯一一次），使用直接 R.id 參照避免反射
+        slotButtons = listOf(
+            overlayView.findViewById(R.id.slot0),
+            overlayView.findViewById(R.id.slot1),
+            overlayView.findViewById(R.id.slot2),
+            overlayView.findViewById(R.id.slot3),
+            overlayView.findViewById(R.id.slot4),
+            overlayView.findViewById(R.id.slot5),
+            overlayView.findViewById(R.id.slot6),
+            overlayView.findViewById(R.id.slot7),
+            overlayView.findViewById(R.id.slot8)
+        )
 
         setupDraggableHeader()
         setupButtons()
@@ -275,6 +286,7 @@ class OverlayService : Service() {
                     }
 
                     gestureDao.insertItem(item)
+                    parsedPointsCache.remove(selectedSlot) // 清除舊快取
                     withContext(Dispatchers.Main) {
                         slotButtons[selectedSlot].text = if (tempActionType == 1) "C" else "S"
                         Toast.makeText(this@OverlayService, "已儲存至槽位 ${selectedSlot + 1}", Toast.LENGTH_SHORT).show()
@@ -311,11 +323,12 @@ class OverlayService : Service() {
                         if (item.actionType == 1) {
                             playSmartClick(item.nodeText, item.nodeViewId, item.nodeClassName)
                         } else {
-                            val points = item.serializedPathData.split(";").mapNotNull {
-                                val parts = it.split(",")
-                                if (parts.size == 2) {
-                                    Pair(parts[0].toFloat(), parts[1].toFloat())
-                                } else null
+                            val points = parsedPointsCache.getOrPut(item.slotIndex) {
+                                item.serializedPathData.split(";").mapNotNull {
+                                    val parts = it.split(",")
+                                    if (parts.size == 2) Pair(parts[0].toFloat(), parts[1].toFloat())
+                                    else null
+                                }
                             }
                             if (points.isNotEmpty()) {
                                 playGesture(points, item.durationMs)

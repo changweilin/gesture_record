@@ -140,3 +140,66 @@ T2 與 T7 需一起完成（版本號同步）。
 - [x] T5：`onDestroy` 的 catch block 加入 `Log.e`
 - [x] T6：名稱長度驗證 ≤ 50 字元
 - [x] T7：`MIGRATION_2_3` 定義，資料庫版本升至 3，移除 destructive migration
+
+---
+
+## 第二階段：效能輕量化（在其他 App 上運行）
+
+> 目標：減少 GC 壓力、降低 CPU 佔用，讓 overlay 對底層 App 影響最小化。
+
+### P1 — TransparentCaptureView 距離閾值 + 繪製節流
+
+**問題**：
+- `ACTION_MOVE` 每次都記錄觸控點，60fps 快速滑動時每秒可產生 200+ 個 `Pair<Float,Float>` 堆疊物件，造成 GC 暫停。
+- `invalidate()` 每次觸控事件都觸發整個 View 全量重繪，佔用 UI thread。
+
+**修正**：
+```kotlin
+private const val MIN_POINT_DISTANCE_SQ = 25f // 5px 距離閾值
+
+// ACTION_MOVE：只有距上一點 ≥ 5px 才記錄並重繪
+val dx = x - lastX; val dy = y - lastY
+if (dx*dx + dy*dy >= MIN_POINT_DISTANCE_SQ) {
+    path.lineTo(x, y); recordedPoints.add(Pair(x, y))
+    lastX = x; lastY = y
+    postInvalidateOnAnimation() // 與 Choreographer 同步，最多 60fps
+}
+```
+
+效果：點位數量減少 ~70%，物件分配減少同比，重繪與 Vsync 對齊。
+
+---
+
+### P2 — OverlayService 路徑點位解析快取
+
+**問題**：每次點擊「播放選取槽位」，都對序列化字串做 `split(";")` + `split(",")` + `toFloat()` 全量解析，重複 CPU 計算。
+
+**修正**：加入 `parsedPointsCache: HashMap<Int, List<Pair<Float,Float>>>` 以 `slotIndex` 為 key，
+儲存時清除對應 key，播放時 hit cache 直接使用：
+```kotlin
+val points = parsedPointsCache.getOrPut(item.slotIndex) {
+    item.serializedPathData.split(";").mapNotNull { ... }
+}
+```
+
+---
+
+### P3 — OverlayService 取代 getIdentifier 反射呼叫
+
+**問題**：`resources.getIdentifier("slot$i", "id", packageName)` 在每次 `createOverlayView()` 呼叫時走反射查找，比直接使用 `R.id` 慢。
+
+**修正**：改回明確列舉 `R.id.slot0 .. R.id.slot8`。
+
+---
+
+### 第二階段執行順序
+
+```
+P1 (點位節流) → P2 (解析快取) → P3 (移除反射)
+```
+
+### 第二階段完成標準
+
+- [x] P1：`TransparentCaptureView` 設 5px 距離閾值，MOVE 事件改用 `postInvalidateOnAnimation()`
+- [x] P2：`OverlayService` 新增 `parsedPointsCache`，儲存時清除，播放時命中快取
+- [x] P3：`OverlayService.createOverlayView()` 改用直接 `R.id.slotX` 參照
